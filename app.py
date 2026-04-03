@@ -23,7 +23,7 @@ st.markdown("""
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     </style>
-    """, unsafe_index=True)
+    """, unsafe_allow_html=True)
 
 st.title("⚡ EnergyAnalyzer: Diagnóstico Energético Inteligente")
 st.markdown("**Solução Estratégica para Redução de Custos Fixos**")
