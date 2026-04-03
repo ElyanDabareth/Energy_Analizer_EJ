@@ -116,7 +116,11 @@ if st.session_state.equipamentos:
     m1.metric("Consumo Total", f"{total_kwh:.2f} kWh")
     m2.metric("Custo Identificado", f"R$ {custo_total_estimado:.2f}")
     m3.metric("Rastreabilidade", f"{eficiencia_base:.1%}", help="Quanto do valor da fatura foi identificado no inventário")
+   # Adicione isso logo após os cálculos de custo total
+   diferenca = fatura_atual - custo_total_estimado
 
+   if diferenca > (fatura_atual * 0.3): # Se a diferença for maior que 30%
+      st.warning(f"⚠️ Atenção: R$ {diferenca:.2f} do seu consumo não foram identificados. Isso pode indicar fugas de energia, fiação antiga ou erros de medição.")
     # Exibição da Tabela com Destaque
     st.dataframe(
         df.style.highlight_max(axis=0, subset=["Consumo (kWh)"], color="#ff4b4b33"),
