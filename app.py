@@ -67,33 +67,42 @@ def classificar_impacto(p):
     return "🟢 Baixo"
 
 # =========================
-# ENTRADA DE DADOS (INVENTÁRIO)
+# INVENTÁRIO (COM REPLICAÇÃO)
 # =========================
-st.subheader("🔍 Levantamento de Cargas")
+st.subheader("🔍 Inventário de Equipamentos")
+
 with st.form("form_equipamentos", clear_on_submit=True):
-    col1, col2, col3 = st.columns([2, 1, 1])
+    col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
 
     with col1:
-        nome = st.text_input("Nome do Equipamento (ex: Ar-Condicionado, Freezer)")
+        nome = st.text_input("Equipamento")
     with col2:
-        potencia = st.number_input("Potência Nominal (Watts)", min_value=0.0, step=10.0)
+        potencia = st.number_input("Potência Unitária (W)", min_value=0.0, step=10.0)
     with col3:
-        horas = st.slider("Uso Diário (Horas)", 0, 24, 8)
+        # CAMPO NOVO: Quantidade para replicar itens iguais
+        quantidade = st.number_input("Qtd", min_value=1, value=1)
+    with col4:
+        horas = st.slider("Horas/dia", 0, 24, 8)
 
     adicionar = st.form_submit_button("➕ Adicionar ao Inventário")
 
     if adicionar and nome and potencia > 0:
-        consumo = calcular_consumo(potencia, horas)
-        custo = calcular_custo(consumo)
+        # O segredo está aqui: multiplicamos pela quantidade
+        consumo_total_item = calcular_consumo(potencia, horas) * quantidade
+        custo_total_item = calcular_custo(consumo_total_item)
+
+        # Guardamos no nome algo como "Esteira (x10)" para ficar claro na tabela
+        nome_exibicao = f"{nome} (x{quantidade})" if quantidade > 1 else nome
 
         st.session_state.equipamentos.append({
-            "Equipamento": nome,
-            "Potência (W)": potencia,
+            "Equipamento": nome_exibicao,
+            "Qtd": quantidade,
+            "Potência Total (W)": potencia * quantidade,
             "Horas/dia": horas,
-            "Consumo (kWh)": round(consumo, 2),
-            "Custo (R$)": round(custo, 2)
+            "Consumo (kWh)": round(consumo_total_item, 2),
+            "Custo (R$)": round(custo_total_item, 2)
         })
-
+        st.rerun() # Atualiza a tela para mostrar o novo item imediatamente
 # =========================
 # PROCESSAMENTO E DASHBOARD
 # =========================
