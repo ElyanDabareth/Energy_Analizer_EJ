@@ -56,4 +56,3 @@ if st.button("🚀 Calcular Impacto"):
     
     st.success(f"✅ Com este projeto, a {cliente} economizaria R$ {economia_potencial * 12:.2f} por ano!")
 
-    streamlit run app.py
