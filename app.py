@@ -23,7 +23,7 @@ col1, col2, col3 = st.columns(3)
 with col1:
     equip = st.text_input("Equipamento","a", "Ar-Condicionado")
 with col2:
-    potencia = st.number_input("Potência (Watts)",,"B" value=2000)
+    potencia = st.number_input("Potência (Watts)","B", value=2000)
 with col3:
     horas = st.slider("Uso Diário (Horas)", 0, 24, 10)
 
