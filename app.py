@@ -6,12 +6,12 @@ import pandas as pd
 # =========================
 st.set_page_config(page_title="EnergyAnalyzer", page_icon="⚡", layout="wide")
 
-st.title("⚡ EnergyAnalyzer: Consultoria Júnior")
-st.markdown("Análise técnica de consumo e desperdício energético em comércios locais.")
+st.title("⚡ EnergyAnalyzer: Diagnóstico Energético Inteligente")
+st.markdown("Transformando consumo de energia em decisões estratégicas.")
 st.divider()
 
 # =========================
-# CONSTANTES FÍSICAS
+# CONSTANTES
 # =========================
 TARIFA_MEDIA = 0.95  # R$/kWh
 
@@ -19,24 +19,24 @@ TARIFA_MEDIA = 0.95  # R$/kWh
 # FUNÇÕES
 # =========================
 def calcular_consumo(potencia_w, horas_dia):
-    """Calcula consumo mensal em kWh"""
     return (potencia_w * horas_dia * 30) / 1000
 
 
 def calcular_custo(consumo_kwh):
-    """Calcula custo energético"""
     return consumo_kwh * TARIFA_MEDIA
 
 
-def calcular_economia(fatura):
-    """Estimativa de economia (modelo simples para pitch)"""
-    taxa_reducao = 0.18
-    economia = fatura * taxa_reducao
-    return economia, taxa_reducao
+def classificar_consumo(p):
+    if p > 0.4:
+        return "🔴 Alto impacto"
+    elif p > 0.2:
+        return "🟡 Médio impacto"
+    else:
+        return "🟢 Baixo impacto"
 
 
 # =========================
-# SIDEBAR (DADOS DO CLIENTE)
+# SIDEBAR
 # =========================
 st.sidebar.header("📋 Dados do Cliente")
 
@@ -45,12 +45,15 @@ tipo = st.sidebar.selectbox("Tipo", ["Academia", "Mercado", "Condomínio"])
 fatura_atual = st.sidebar.number_input("Fatura Atual (R$)", min_value=0.0, value=1500.0)
 
 # =========================
-# INVENTÁRIO DE EQUIPAMENTOS
+# ESTADO
 # =========================
-st.subheader("🔍 Inventário de Equipamentos")
-
 if "equipamentos" not in st.session_state:
     st.session_state.equipamentos = []
+
+# =========================
+# INVENTÁRIO
+# =========================
+st.subheader("🔍 Inventário de Equipamentos")
 
 with st.form("form_equipamentos"):
     col1, col2, col3 = st.columns(3)
@@ -62,7 +65,7 @@ with st.form("form_equipamentos"):
     with col3:
         horas = st.slider("Horas/dia", 0, 24, 8)
 
-    adicionar = st.form_submit_button("➕ Adicionar Equipamento")
+    adicionar = st.form_submit_button("➕ Adicionar")
 
     if adicionar and nome:
         consumo = calcular_consumo(potencia, horas)
@@ -77,57 +80,87 @@ with st.form("form_equipamentos"):
         })
 
 # =========================
-# TABELA DE RESULTADOS
+# ANÁLISE
 # =========================
 if st.session_state.equipamentos:
     df = pd.DataFrame(st.session_state.equipamentos)
 
-    st.subheader("📊 Consumo Detalhado")
-    st.dataframe(df, use_container_width=True)
+    # Ordenação
+    df = df.sort_values("Consumo (kWh)", ascending=False)
+
+    # Pareto
+    df["% Consumo"] = df["Consumo (kWh)"] / df["Consumo (kWh)"].sum()
+    df["% Acumulado"] = df["% Consumo"].cumsum()
+
+    # Classificação
+    df["Impacto"] = df["% Consumo"].apply(classificar_consumo)
+
+    # =========================
+    # DIAGNÓSTICO
+    # =========================
+    st.subheader("📊 Diagnóstico Energético")
 
     consumo_total = df["Consumo (kWh)"].sum()
     custo_total = df["Custo (R$)"].sum()
 
-    # =========================
-    # MÉTRICAS
-    # =========================
-    st.subheader("📈 Indicadores Gerais")
-
-    m1, m2, m3 = st.columns(3)
-
+    m1, m2 = st.columns(2)
     m1.metric("Consumo Total", f"{consumo_total:.2f} kWh")
     m2.metric("Custo Estimado", f"R$ {custo_total:.2f}")
 
-    economia, taxa = calcular_economia(fatura_atual)
-    m3.metric("Economia Potencial", f"R$ {economia:.2f}", delta=f"-{int(taxa*100)}%")
+    st.dataframe(df, use_container_width=True)
 
     # =========================
-    # GRÁFICOS
+    # INTELIGÊNCIA
     # =========================
-    st.subheader("📉 Análise Visual")
+    st.subheader("🧠 Análise de Consumo (Prioridade)")
 
-    col_g1, col_g2 = st.columns(2)
+    col1, col2 = st.columns(2)
 
-    with col_g1:
+    with col1:
+        st.markdown("### 🏆 Ranking")
         st.bar_chart(df.set_index("Equipamento")["Consumo (kWh)"])
 
-    with col_g2:
-        dados_pitch = pd.DataFrame({
-            "Cenário": ["Atual", "Com Consultoria"],
-            "Custo (R$)": [fatura_atual, fatura_atual - economia]
-        }).set_index("Cenário")
-
-        st.bar_chart(dados_pitch)
+    with col2:
+        st.markdown("### 📉 Pareto (%)")
+        st.line_chart(df.set_index("Equipamento")["% Acumulado"])
 
     # =========================
-    # IMPACTO ANUAL
+    # SIMULAÇÃO
     # =========================
-    economia_anual = economia * 12
+    st.subheader("🎯 Simulação de Intervenção")
+
+    top = df.iloc[0]
+
+    st.markdown(f"""
+    **Equipamento mais relevante:** {top['Equipamento']}  
+    Participação no consumo: {top['% Consumo']:.2%}
+    """)
+
+    reducao = st.slider("Redução no principal equipamento (%)", 0, 50, 20)
+
+    economia_kwh = top["Consumo (kWh)"] * (reducao / 100)
+    economia_reais = economia_kwh * TARIFA_MEDIA
+
+    m1, m2 = st.columns(2)
+
+    m1.metric("Economia Mensal", f"R$ {economia_reais:.2f}")
+    m2.metric("Economia Anual", f"R$ {economia_reais * 12:.2f}")
+
+    # =========================
+    # COMPARAÇÃO FINAL
+    # =========================
+    st.subheader("📈 Impacto Financeiro")
+
+    dados_pitch = pd.DataFrame({
+        "Cenário": ["Atual", "Após Intervenção"],
+        "Custo (R$)": [fatura_atual, fatura_atual - economia_reais]
+    }).set_index("Cenário")
+
+    st.bar_chart(dados_pitch)
 
     st.success(
-        f"✅ A {cliente} pode economizar aproximadamente "
-        f"R$ {economia_anual:.2f} por ano."
+        f"✅ Potencial de economia anual: R$ {economia_reais * 12:.2f}"
     )
 
 else:
-    st.info("Adicione pelo menos um equipamento para iniciar a análise.")
+    st.info("Adicione equipamentos para iniciar a análise.")
