@@ -1,58 +1,133 @@
 import streamlit as st
 import pandas as pd
 
-# Configuração da página
-st.set_page_config(page_title="EnergyAnalyzer", page_icon="⚡")
+# =========================
+# CONFIGURAÇÃO DA PÁGINA
+# =========================
+st.set_page_config(page_title="EnergyAnalyzer", page_icon="⚡", layout="wide")
 
 st.title("⚡ EnergyAnalyzer: Consultoria Júnior")
-st.markdown("""
-Esta ferramenta analisa o desperdício energético em comércios locais.
----
-""")
+st.markdown("Análise técnica de consumo e desperdício energético em comércios locais.")
+st.divider()
 
-# 1. ENTRADA DE DADOS (Barra Lateral)
+# =========================
+# CONSTANTES FÍSICAS
+# =========================
+TARIFA_MEDIA = 0.95  # R$/kWh
+
+# =========================
+# FUNÇÕES
+# =========================
+def calcular_consumo(potencia_w, horas_dia):
+    """Calcula consumo mensal em kWh"""
+    return (potencia_w * horas_dia * 30) / 1000
+
+
+def calcular_custo(consumo_kwh):
+    """Calcula custo energético"""
+    return consumo_kwh * TARIFA_MEDIA
+
+
+def calcular_economia(fatura):
+    """Estimativa de economia (modelo simples para pitch)"""
+    taxa_reducao = 0.18
+    economia = fatura * taxa_reducao
+    return economia, taxa_reducao
+
+
+# =========================
+# SIDEBAR (DADOS DO CLIENTE)
+# =========================
 st.sidebar.header("📋 Dados do Cliente")
+
 cliente = st.sidebar.text_input("Nome do Estabelecimento", "Academia Fit")
 tipo = st.sidebar.selectbox("Tipo", ["Academia", "Mercado", "Condomínio"])
-fatura_atual = st.sidebar.number_input("Valor da Fatura (R$)", min_value=0.0, value=1500.0)
+fatura_atual = st.sidebar.number_input("Fatura Atual (R$)", min_value=0.0, value=1500.0)
 
-# 2. INVENTÁRIO DE CARGAS (Corpo Principal)
+# =========================
+# INVENTÁRIO DE EQUIPAMENTOS
+# =========================
 st.subheader("🔍 Inventário de Equipamentos")
-col1, col2, col3 = st.columns(3)
 
-with col1:
-    equip = st.text_input("Equipamento", "Ar-Condicionado")
-with col2:
-    potencia = st.number_input("Potência (Watts)", value=2000)
-with col3:
-    horas = st.slider("Uso Diário (Horas)", 0, 24, 10)
+if "equipamentos" not in st.session_state:
+    st.session_state.equipamentos = []
 
-# 3. CÁLCULOS TÉCNICOS
-# Consumo Mensal = (Watts * Horas * 30 dias) / 1000
-consumo_kwh = (potencia * horas * 30) / 1000
-tarifa_media = 0.95  # Valor médio com impostos
-custo_estimado = consumo_kwh * tarifa_media
+with st.form("form_equipamentos"):
+    col1, col2, col3 = st.columns(3)
 
-# 4. RESULTADOS E MÉTRICAS
-if st.button("🚀 Calcular Impacto"):
-    st.divider()
-    st.header(f"Resultado para {cliente}")
-    
+    with col1:
+        nome = st.text_input("Equipamento")
+    with col2:
+        potencia = st.number_input("Potência (W)", min_value=0.0)
+    with col3:
+        horas = st.slider("Horas/dia", 0, 24, 8)
+
+    adicionar = st.form_submit_button("➕ Adicionar Equipamento")
+
+    if adicionar and nome:
+        consumo = calcular_consumo(potencia, horas)
+        custo = calcular_custo(consumo)
+
+        st.session_state.equipamentos.append({
+            "Equipamento": nome,
+            "Potência (W)": potencia,
+            "Horas/dia": horas,
+            "Consumo (kWh)": consumo,
+            "Custo (R$)": custo
+        })
+
+# =========================
+# TABELA DE RESULTADOS
+# =========================
+if st.session_state.equipamentos:
+    df = pd.DataFrame(st.session_state.equipamentos)
+
+    st.subheader("📊 Consumo Detalhado")
+    st.dataframe(df, use_container_width=True)
+
+    consumo_total = df["Consumo (kWh)"].sum()
+    custo_total = df["Custo (R$)"].sum()
+
+    # =========================
+    # MÉTRICAS
+    # =========================
+    st.subheader("📈 Indicadores Gerais")
+
     m1, m2, m3 = st.columns(3)
-    m1.metric("Consumo do Item", f"{consumo_kwh} kWh")
-    m2.metric("Custo do Item", f"R$ {custo_estimado:.2f}")
-    
-    # Simulação de economia para o Pitch
-    economia_potencial = fatura_atual * 0.18
-    m3.metric("Economia Estimada", f"R$ {economia_potencial:.2f}", delta="-18%")
 
-    # GRÁFICO PARA O PITCH
-    st.subheader("Gráfico de Viabilidade")
-    dados_grafico = pd.DataFrame({
-        "Cenário": ["Gasto Atual", "Com nossa Consultoria"],
-        "Valores (R$)": [fatura_atual, fatura_atual - economia_potencial]
-    })
-    st.bar_chart(data=dados_grafico, x="Cenário", y="Valores (R$)")
-    
-    st.success(f"✅ Com este projeto, a {cliente} economizaria R$ {economia_potencial * 12:.2f} por ano!")
+    m1.metric("Consumo Total", f"{consumo_total:.2f} kWh")
+    m2.metric("Custo Estimado", f"R$ {custo_total:.2f}")
 
+    economia, taxa = calcular_economia(fatura_atual)
+    m3.metric("Economia Potencial", f"R$ {economia:.2f}", delta=f"-{int(taxa*100)}%")
+
+    # =========================
+    # GRÁFICOS
+    # =========================
+    st.subheader("📉 Análise Visual")
+
+    col_g1, col_g2 = st.columns(2)
+
+    with col_g1:
+        st.bar_chart(df.set_index("Equipamento")["Consumo (kWh)"])
+
+    with col_g2:
+        dados_pitch = pd.DataFrame({
+            "Cenário": ["Atual", "Com Consultoria"],
+            "Custo (R$)": [fatura_atual, fatura_atual - economia]
+        }).set_index("Cenário")
+
+        st.bar_chart(dados_pitch)
+
+    # =========================
+    # IMPACTO ANUAL
+    # =========================
+    economia_anual = economia * 12
+
+    st.success(
+        f"✅ A {cliente} pode economizar aproximadamente "
+        f"R$ {economia_anual:.2f} por ano."
+    )
+
+else:
+    st.info("Adicione pelo menos um equipamento para iniciar a análise.")
