@@ -177,7 +177,7 @@ if st.session_state.equipamentos:
     st.markdown("### 📈 Projeção Financeira Anual")
     
     dados_anual = pd.DataFrame({
-        "Cenário": [Style.BRIGHT + 'Sem Consultoria '+ Style.RESET_ALL, "Com Consultoria"],
+        "Cenário": [ "Sem Consultoria ", "Com Consultoria"],
         "Custo Anual (R$)": [fatura_atual * 12, (fatura_atual * 12) - economia_anual]
     }).set_index("Cenário")
     
