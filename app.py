@@ -14,7 +14,7 @@ st.set_page_config(
 st.markdown("""
     <style>
     .main {
-        background-color: #f5f7f9;
+        background-color: #467ce9;
     }
     .stMetric {
         background-color: #801e1e;
