@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+from colorama import Style, init
 
 # =========================
 # CONFIGURAÇÃO DA PÁGINA
@@ -174,8 +175,9 @@ if st.session_state.equipamentos:
 
     # Gráfico Final de Impacto no Bolso
     st.markdown("### 📈 Projeção Financeira Anual")
+    init()
     dados_anual = pd.DataFrame({
-        "Cenário": ["Sem Consultoria", "Com Consultoria"],
+        "Cenário": [Style.BRIGHT + 'Sem Consultoria '+ Style.RESET_ALL, "Com Consultoria"],
         "Custo Anual (R$)": [fatura_atual * 12, (fatura_atual * 12) - economia_anual]
     }).set_index("Cenário")
     
