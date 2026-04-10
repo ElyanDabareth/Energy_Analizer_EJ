@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from colorama import Style, init
+
 
 # =========================
 # CONFIGURAÇÃO DA PÁGINA
