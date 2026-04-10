@@ -5,7 +5,7 @@ import pandas as pd
 # CONFIGURAÇÃO DA PÁGINA
 # =========================
 st.set_page_config(
-    page_title="EnergyAnalyzer | Consultoria Jr", 
+    page_title="Lux | Consultoria Jr", 
     page_icon="⚡", 
     layout="wide"
 )
@@ -25,7 +25,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.title("⚡ EnergyAnalyzer: Diagnóstico Energético Inteligente")
+st.title("⚡ Lux: Diagnóstico Energético Inteligente")
 st.markdown("**Solução Estratégica para Redução de Custos Fixos**")
 st.divider()
 
